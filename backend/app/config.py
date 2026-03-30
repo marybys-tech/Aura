@@ -17,7 +17,10 @@ class Settings(BaseSettings):
     # OAuth - GitHub
     GITHUB_CLIENT_ID: str = ""
     GITHUB_CLIENT_SECRET: SecretStr = SecretStr("")
-    GITHUB_REDIRECT_URI: str = "http://localhost:5173/oauth/github/callback"
+    GITHUB_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/github/callback"
+
+    # Frontend
+    FRONTEND_URL: str = "http://localhost:5173"
 
     # AWS Bedrock
     AWS_REGION: str = "us-east-1"

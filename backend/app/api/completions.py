@@ -7,7 +7,13 @@ from app.core.constants import CompletionStatus
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
-from app.schemas.completion import CompletionRequest, CompletionResponse, CompletionWithScoreResponse, CategoryScoreResponse
+from app.schemas.completion import (
+    CategoryScoreResponse,
+    CompletionRequest,
+    CompletionResponse,
+    CompletionWithScoreResponse,
+    NarrationResponse,
+)
 from app.services import completion_service
 
 router = APIRouter(prefix="/habits", tags=["Completions"])
@@ -17,7 +23,7 @@ router = APIRouter(prefix="/habits", tags=["Completions"])
     "/{habit_id}/complete",
     response_model=CompletionWithScoreResponse,
     summary="Mark habit as completed",
-    description="Records a completion for the given date, updates category score, and returns the result.",
+    description="Records a completion, updates category score, generates AI Master narration, and returns all three.",
 )
 async def complete_habit(
     habit_id: uuid.UUID,
@@ -25,12 +31,13 @@ async def complete_habit(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    completion, score = await completion_service.record_completion(
+    completion, score, narration = await completion_service.record_completion(
         db, habit_id, user.id, body.date, CompletionStatus.COMPLETED
     )
     return CompletionWithScoreResponse(
         completion=CompletionResponse.model_validate(completion),
         updated_score=CategoryScoreResponse.model_validate(score),
+        narration=NarrationResponse.model_validate(narration) if narration else None,
     )
 
 
@@ -38,7 +45,7 @@ async def complete_habit(
     "/{habit_id}/skip",
     response_model=CompletionWithScoreResponse,
     summary="Mark habit as skipped",
-    description="Records a skip for the given date, applies penalty to category score.",
+    description="Records a skip, applies penalty to category score, generates AI Master narration.",
 )
 async def skip_habit(
     habit_id: uuid.UUID,
@@ -46,12 +53,13 @@ async def skip_habit(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    completion, score = await completion_service.record_completion(
+    completion, score, narration = await completion_service.record_completion(
         db, habit_id, user.id, body.date, CompletionStatus.SKIPPED
     )
     return CompletionWithScoreResponse(
         completion=CompletionResponse.model_validate(completion),
         updated_score=CategoryScoreResponse.model_validate(score),
+        narration=NarrationResponse.model_validate(narration) if narration else None,
     )
 
 

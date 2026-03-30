@@ -1,7 +1,10 @@
+from urllib.parse import urlencode
+
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.core.oauth import github_callback, github_login_url
 from app.database import get_db
 from app.schemas.auth import RefreshRequest, TokenResponse
@@ -15,11 +18,17 @@ async def github_login():
     return RedirectResponse(github_login_url())
 
 
-@router.get("/github/callback", response_model=TokenResponse, summary="Handle GitHub OAuth callback")
+@router.get("/github/callback", summary="Handle GitHub OAuth callback")
 async def github_oauth_callback(code: str = Query(...), db: AsyncSession = Depends(get_db)):
+    """Exchange code for tokens, then redirect to frontend with tokens in query string."""
     info = await github_callback(code)
     user = await auth_service.upsert_user_from_oauth(db, info)
-    return await auth_service.issue_tokens(db, user)
+    tokens = await auth_service.issue_tokens(db, user)
+    params = urlencode({
+        "access_token": tokens.access_token,
+        "refresh_token": tokens.refresh_token,
+    })
+    return RedirectResponse(f"{settings.FRONTEND_URL}/oauth/github/callback?{params}")
 
 
 @router.post("/refresh", response_model=TokenResponse, summary="Refresh access token")

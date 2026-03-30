@@ -1,13 +1,16 @@
 import uuid
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.models.category_score import CategoryScore
+from app.models.habit import Habit
 from app.models.user import User
 from app.schemas.quest import QuestResponse
-from app.services import quest_service
+from app.services import ai_master_service, quest_service
 
 router = APIRouter(prefix="/quests", tags=["Quests"])
 
@@ -23,6 +26,33 @@ async def list_quests(
     db: AsyncSession = Depends(get_db),
 ):
     return await quest_service.get_quests(db, user.id)
+
+
+@router.post(
+    "/generate",
+    response_model=QuestResponse | None,
+    summary="Generate a new quest via AI Master",
+    description="AI Master analyzes your scores and habits to create a personalized quest targeting your weakest category.",
+)
+async def generate_quest(
+    quest_type: str = "daily",
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    scores_result = await db.execute(select(CategoryScore).where(CategoryScore.user_id == user.id))
+    scores = {s.category: s.score for s in scores_result.scalars().all()}
+
+    habits_result = await db.execute(
+        select(Habit.title).where(Habit.user_id == user.id, Habit.is_active == True)  # noqa: E712
+    )
+    habit_titles = [r[0] for r in habits_result.all()]
+
+    quest_data = await ai_master_service.generate_quest_data(scores, habit_titles, quest_type)
+    if not quest_data:
+        return None
+
+    quest = await quest_service.create_quest(db, user.id, quest_data)
+    return quest
 
 
 @router.post(

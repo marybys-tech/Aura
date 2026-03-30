@@ -9,7 +9,8 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.models.category_score import CategoryScore
 from app.models.completion import HabitCompletion
 from app.models.habit import Habit
-from app.services import stats_engine
+from app.models.narration import Narration
+from app.services import ai_master_service, stats_engine
 
 
 async def record_completion(
@@ -18,8 +19,8 @@ async def record_completion(
     user_id: uuid.UUID,
     completion_date: date,
     status: CompletionStatus,
-) -> tuple[HabitCompletion, CategoryScore]:
-    """Record a completion or skip, update score, return both."""
+) -> tuple[HabitCompletion, CategoryScore, Narration | None]:
+    """Record a completion or skip, update score, generate narration, return all three."""
     habit = await _get_owned_habit(db, habit_id, user_id)
 
     existing = await _get_existing(db, habit_id, completion_date)
@@ -29,9 +30,11 @@ async def record_completion(
     if status == CompletionStatus.COMPLETED:
         streak = await _calculate_streak(db, habit_id, completion_date)
         points = stats_engine.completion_points(streak)
+        consecutive_skips = 0
     else:
-        consecutive = await _count_consecutive_skips(db, habit_id, completion_date)
-        points = stats_engine.skip_penalty(consecutive + 1)
+        streak = 0
+        consecutive_skips = await _count_consecutive_skips(db, habit_id, completion_date) + 1
+        points = stats_engine.skip_penalty(consecutive_skips)
 
     completion = HabitCompletion(
         habit_id=habit_id,
@@ -47,7 +50,21 @@ async def record_completion(
     await db.commit()
     await db.refresh(completion)
     await db.refresh(score)
-    return completion, score
+
+    # Generate AI Master narration (non-blocking — if Bedrock fails, returns fallback)
+    narration = await ai_master_service.generate_narration(
+        db=db,
+        user_id=user_id,
+        trigger_type=status.value,
+        habit_title=habit.title,
+        category=habit.category,
+        streak=streak,
+        score=score.score,
+        consecutive_skips=consecutive_skips,
+        trigger_ref_id=completion.id,
+    )
+
+    return completion, score, narration
 
 
 async def get_habit_history(

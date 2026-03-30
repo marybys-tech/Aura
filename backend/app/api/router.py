@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.api.ai_master import router as ai_master_router
 from app.api.auth import router as auth_router
 from app.api.completions import router as completions_router
 from app.api.dashboard import router as dashboard_router
@@ -17,6 +18,7 @@ api_router.include_router(completions_router)
 api_router.include_router(dashboard_router)
 api_router.include_router(stats_router)
 api_router.include_router(quests_router)
+api_router.include_router(ai_master_router)
 
 
 @api_router.get("/health", tags=["Health"])
