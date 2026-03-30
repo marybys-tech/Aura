@@ -6,18 +6,13 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://aura:aura@localhost:5432/aura"
+    DATABASE_URL: str = "postgresql+asyncpg://aura:aura@localhost:5433/aura"
 
     # Auth
     JWT_SECRET: SecretStr = SecretStr("change-me-in-production")
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
-
-    # OAuth - Google
-    GOOGLE_CLIENT_ID: str = ""
-    GOOGLE_CLIENT_SECRET: SecretStr = SecretStr("")
-    GOOGLE_REDIRECT_URI: str = "http://localhost:5173/oauth/google/callback"
 
     # OAuth - GitHub
     GITHUB_CLIENT_ID: str = ""

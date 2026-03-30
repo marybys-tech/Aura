@@ -1,5 +1,30 @@
 # Aura — Gamified Habit Tracker with AI Master
 
+## Code Standards (MUST FOLLOW)
+
+### General
+- **Modular, clean code**: small focused files (<200 lines). One concern per file. If a file grows large, split it.
+- **DRY / SOLID / KISS**: no copy-paste, no god-objects, simplest solution that works.
+- **Reusable components**: extract shared logic into hooks (frontend) or services (backend). UI components should be composable and generic where sensible.
+- **No dead code**: don't leave commented-out code, unused imports, or placeholder stubs that do nothing.
+
+### Backend (Python / FastAPI)
+- **Thin route handlers**: routes validate input and delegate to services. No business logic in route files.
+- **Service layer**: all business logic lives in `app/services/`. Services receive a DB session, never create their own.
+- **Type everything**: use Pydantic schemas for all request/response bodies. Use Python type hints everywhere.
+- **OpenAPI documentation**: every endpoint must have a clear `summary`, `description`, and `response_model`. Use `tags` to group endpoints. The auto-generated docs at `/docs` should be self-explanatory.
+- **Tests**: unit tests for pure business logic (stats engine, scoring). Integration tests for API endpoints (test full request→response cycle). Use pytest fixtures and factories. Aim for high coverage on services and routes.
+- **Security**: parameterized queries only (via ORM), validate all input with Pydantic, enforce ownership checks on every resource access.
+
+### Frontend (React / TypeScript)
+- **Small components**: one component per file, max ~150 lines. Split layout, logic, and presentation.
+- **Custom hooks**: extract data-fetching and mutations into `hooks/` using TanStack Query. Components should not call `api` directly.
+- **Type safety**: define all API response shapes in `types/`. No `any`.
+- **Reusable UI**: use ShadcnUI primitives, compose them into domain components in `components/`. Don't duplicate styling.
+- **Tests**: test components with Vitest + RTL. Test hooks with MSW mocks. Focus on user-visible behavior, not implementation details.
+
+---
+
 ## Context
 
 Build a gamified habit-tracking dashboard from scratch. Users manage habits by categories, see progress visualized as an animated "Aura" character, and receive AI-powered narration and quests from an "AI Master" mentor. The project is greenfield (empty git repo).
@@ -9,7 +34,7 @@ Build a gamified habit-tracking dashboard from scratch. Users manage habits by c
 ## Polished Idea Summary
 
 **Aura** is a game-like habit dashboard where users:
-- Register via Google/GitHub OAuth, see avatar in header with logout dropdown
+- Register via GitHub OAuth, see avatar in header with logout dropdown
 - Add habits in 6 categories: **Intelligence**, **Stamina**, **Sociality**, **Creativity**, **Discipline**, **Wellness** — each with a distinct color
 - Configure habit schedules: daily, specific weekdays, or multiple times per day
 - On the main dashboard: switch between **Today / Week / Month** views, see habits as cards (only today's are actionable — complete/skip), view stats by category, see AI-generated quests, and watch the Aura visualization. Week and month views show a read-only calendar/grid of past and future habit statuses.
@@ -26,7 +51,7 @@ Build a gamified habit-tracking dashboard from scratch. Users manage habits by c
 | Frontend | React 18+ (Vite), TypeScript, ShadcnUI, TanStack Query, Zustand |
 | Database | PostgreSQL |
 | AI | AWS Bedrock (Claude Haiku for narrations, Opus available for complex generation) |
-| Auth | OAuth2 (Google + GitHub), JWT access/refresh tokens |
+| Auth | OAuth2 (GitHub), JWT access/refresh tokens |
 | Testing | pytest + pytest-asyncio + testcontainers (backend), Vitest + RTL + MSW (frontend) |
 
 ---
@@ -72,7 +97,7 @@ Build a gamified habit-tracking dashboard from scratch. Users manage habits by c
 | email | VARCHAR(320) | UNIQUE |
 | display_name | VARCHAR(100) | |
 | avatar_url | VARCHAR(2048) | from OAuth |
-| oauth_provider | VARCHAR(20) | 'google' / 'github' |
+| oauth_provider | VARCHAR(20) | 'github' |
 | oauth_provider_id | VARCHAR(255) | UNIQUE with provider |
 | timezone | VARCHAR(50) | default 'UTC' |
 | created_at / updated_at | TIMESTAMPTZ | |
@@ -178,8 +203,6 @@ Colors are soft neon — vibrant but not harsh, with lighter glow variants for t
 ## API Endpoints (all under `/api/v1`)
 
 ### Auth
-- `GET /auth/google/login` → redirect URL
-- `GET /auth/google/callback` → tokens + user
 - `GET /auth/github/login` → redirect URL
 - `GET /auth/github/callback` → tokens + user
 - `POST /auth/refresh` → new token pair
@@ -365,7 +388,7 @@ Desktop (lg+):                          Mobile:
 - Alembic init + first migration (all tables)
 
 ### Phase 2: Auth
-- OAuth flows (Google + GitHub)
+- OAuth flow (GitHub)
 - JWT issuance/refresh/logout
 - Frontend login page, callback handler, RequireAuth guard
 - Header with avatar + logout dropdown
@@ -408,7 +431,7 @@ Desktop (lg+):                          Mobile:
 1. **Backend**: `docker-compose up` starts Postgres + API; run `pytest` for unit + integration tests against real DB (testcontainers)
 2. **Frontend**: `npm run dev` starts Vite dev server; run `npx vitest` for component + hook tests with MSW mocks
 3. **End-to-end manual**:
-   - Login via Google/GitHub → see dashboard
+   - Login via GitHub → see dashboard
    - Add habits across categories → see them on habits page
    - Complete/skip habits → verify score changes, aura flare/dim, master popup appears
    - Switch between Today/Week/Month views → verify read-only behavior for non-today
