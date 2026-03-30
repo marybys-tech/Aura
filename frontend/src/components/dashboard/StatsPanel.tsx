@@ -1,0 +1,40 @@
+import type { CategoryScore, Category } from "@/types";
+import { getCategoryColor, getCategoryLabel } from "@/lib/category";
+import { ALL_CATEGORIES } from "@/lib/constants";
+import { Progress } from "@/components/ui/progress";
+
+interface StatsPanelProps {
+  scores: Record<string, CategoryScore>;
+}
+
+export default function StatsPanel({ scores }: StatsPanelProps) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <h3 className="mb-4 text-sm font-semibold">Category Scores</h3>
+      <div className="space-y-3">
+        {ALL_CATEGORIES.map((cat) => {
+          const s = scores[cat];
+          const score = s?.score ?? 0;
+          const color = getCategoryColor(cat as Category);
+          return (
+            <div key={cat} className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="font-medium">{getCategoryLabel(cat as Category)}</span>
+                </div>
+                <span className="text-muted-foreground">{Math.round(score)} / 100</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${score}%`, backgroundColor: color }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

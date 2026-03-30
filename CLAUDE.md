@@ -48,7 +48,7 @@ Build a gamified habit-tracking dashboard from scratch. Users manage habits by c
 | Layer | Technology |
 |-------|-----------|
 | Backend | Python 3.12+, FastAPI, SQLAlchemy (async + asyncpg), Alembic, uv (package manager) |
-| Frontend | React 18+ (Vite), TypeScript, ShadcnUI, TanStack Query, Zustand |
+| Frontend | React 18+ (Vite), TypeScript, ShadcnUI, TanStack Router, TanStack Query, Zustand |
 | Database | PostgreSQL |
 | AI | AWS Bedrock (Claude Haiku for narrations, Opus available for complex generation) |
 | Auth | OAuth2 (GitHub), JWT access/refresh tokens |
@@ -66,7 +66,7 @@ Build a gamified habit-tracking dashboard from scratch. Users manage habits by c
 │  │  Page     │ │  Page    │ │  (2D particles)  │ │
 │  └────┬─────┘ └────┬─────┘ └────────┬─────────┘ │
 │       └─────────────┼────────────────┘           │
-│              TanStack Query + Zustand             │
+│         TanStack Router + Query + Zustand          │
 │                     │ HTTP (JWT)                  │
 └─────────────────────┼───────────────────────────┘
                       │
@@ -384,7 +384,7 @@ Desktop (lg+):                          Mobile:
 
 ### Phase 1: Project Scaffolding
 - Backend: `uv init` + `uv add` for FastAPI, SQLAlchemy, asyncpg, alembic, etc. Config, database, docker-compose (Postgres)
-- Frontend: Vite + React + TS, Tailwind, ShadcnUI, routing, TanStack Query
+- Frontend: Vite + React + TS, Tailwind, ShadcnUI, TanStack Router + Query
 - Alembic init + first migration (all tables)
 
 ### Phase 2: Auth
