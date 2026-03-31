@@ -2,6 +2,7 @@
 
 import json
 import logging
+import random
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,13 +36,13 @@ async def generate_narration(
     if trigger_type == "completion":
         prompt = (
             f'Event: habit_completed\nHabit: "{habit_title}" (category: {category})\n'
-            f"Streak: {streak} days\nCategory score: {score}/100\n"
+            f"Streak: {streak} days\nCategory vitality: {score}/100\n"
             "Respond with ONLY the narration text."
         )
     else:
         prompt = (
             f'Event: habit_skipped\nHabit: "{habit_title}" (category: {category})\n'
-            f"Consecutive skips: {consecutive_skips}\nCategory score: {score}/100\n"
+            f"Consecutive skips: {consecutive_skips}\nCategory vitality: {score}/100\n"
             "Respond with ONLY the narration text. Be gentle and motivating."
         )
 
@@ -62,30 +63,93 @@ async def generate_narration(
     return narration
 
 
+# --- Quest Generation ---
+
+# Quest templates — each defines criteria + a prompt hint for the AI
+QUEST_TEMPLATES = [
+    {
+        "id": "complete_one",
+        "criteria_fn": lambda cat, _qt: {"type": "any_completion", "category": cat},
+        "target": 1,
+        "points": (4.0, 6.0),
+        "hint": "Complete at least one {category} habit today",
+    },
+    {
+        "id": "complete_two",
+        "criteria_fn": lambda cat, _qt: {"type": "complete_n_habits", "category": cat, "count": 2, "within": "day"},
+        "target": 2,
+        "points": (5.0, 8.0),
+        "hint": "Complete 2 {category} habits in one day",
+    },
+    {
+        "id": "complete_three",
+        "criteria_fn": lambda cat, _qt: {"type": "complete_n_habits", "category": cat, "count": 3, "within": "day"},
+        "target": 3,
+        "points": (6.0, 8.0),
+        "hint": "Complete 3 {category} habits in one day",
+    },
+    {
+        "id": "streak_three",
+        "criteria_fn": lambda cat, _qt: {"type": "maintain_streak", "category": cat, "days": 3},
+        "target": 3,
+        "points": (8.0, 12.0),
+        "hint": "Build a 3-day streak in {category}",
+    },
+    {
+        "id": "streak_five",
+        "criteria_fn": lambda cat, _qt: {"type": "maintain_streak", "category": cat, "days": 5},
+        "target": 5,
+        "points": (12.0, 18.0),
+        "hint": "Maintain a 5-day streak in {category}",
+    },
+    {
+        "id": "total_five",
+        "criteria_fn": lambda _cat, _qt: {"type": "total_completions", "count": 5, "within": "day"},
+        "target": 5,
+        "points": (5.0, 8.0),
+        "hint": "Complete any 5 habits today across all categories",
+    },
+]
+
+
 async def generate_quest_data(
     target_category: str,
     habits: list[str],
     quest_type: str,
     vitality: float,
 ) -> dict | None:
-    """Generate quest creative content via AI for a specific category."""
-    import random
+    """Generate a quest: pick template, then ask AI for creative title + description."""
 
-    points = round(random.uniform(3.0, 8.0) if quest_type == "daily" else random.uniform(10.0, 20.0), 1)
-    criteria_types = ["complete_n_habits", "any_completion", "maintain_streak", "total_completions"]
-    criteria_type = random.choice(criteria_types)
+    # Pick a template appropriate for vitality level
+    if vitality < 20:
+        # Low vitality — easy quest to get them back
+        templates = [t for t in QUEST_TEMPLATES if t["id"] in ("complete_one", "total_five")]
+    elif vitality < 50:
+        templates = [t for t in QUEST_TEMPLATES if t["id"] in ("complete_one", "complete_two", "streak_three")]
+    else:
+        # High vitality — challenge them
+        templates = [t for t in QUEST_TEMPLATES if t["id"] in ("complete_two", "complete_three", "streak_three", "streak_five")]
 
+    template = random.choice(templates)
+    criteria = template["criteria_fn"](target_category, quest_type)
+    points = round(random.uniform(*template["points"]), 1)
+    challenge = template["hint"].format(category=target_category)
+
+    # Ask AI only for the creative wrapper
     prompt = (
-        f"Create a {quest_type} quest for the category '{target_category}'.\n"
+        f"Create a quest title and description for this challenge:\n"
+        f"Category: {target_category}\n"
+        f"Challenge: {challenge}\n"
         f"The student's {target_category} vitality is {vitality}/100.\n"
         f"Their habits include: {', '.join(habits[:5])}\n\n"
-        f"Give it a creative, evocative title (like 'The Scholar's Trial' or 'Path of Iron Will').\n"
-        f"Write a 1-2 sentence description in wise mentor voice (Master Oogway style).\n\n"
+        f"Requirements:\n"
+        f"- Title: creative, thematic, 3-5 words (like 'The Scholar's Trial', 'Rise of the Phoenix', 'Iron Will Awakens')\n"
+        f"- Description: 1-2 sentences, wise mentor voice, must reference the actual challenge ({challenge})\n\n"
         "Return JSON only:\n"
         '{"title": "string", "description": "string"}'
     )
 
-    system = "You are Master Aura, a wise mentor. Return valid JSON only, nothing else."
+    system = "You are Master Aura, a wise mentor designing training challenges. Return valid JSON only."
 
     result = await bedrock_client.invoke_model(
         prompt, system=system, model_id=settings.BEDROCK_QUEST_MODEL,
@@ -101,23 +165,10 @@ async def generate_quest_data(
         logger.error("Failed to parse quest JSON: %s", result)
         return None
 
-    # Build criteria in code (reliable, not AI)
-    if criteria_type == "complete_n_habits":
-        count = random.choice([1, 2, 3])
-        criteria = {"type": "complete_n_habits", "category": target_category, "count": count, "within": "day" if quest_type == "daily" else "week"}
-    elif criteria_type == "maintain_streak":
-        days = random.choice([3, 5, 7]) if quest_type == "weekly" else 2
-        criteria = {"type": "maintain_streak", "category": target_category, "days": days}
-    elif criteria_type == "any_completion":
-        criteria = {"type": "any_completion", "category": target_category}
-    else:
-        count = random.choice([3, 5, 7])
-        criteria = {"type": "total_completions", "count": count, "within": "day" if quest_type == "daily" else "week"}
-
     return {
         "quest_type": quest_type,
         "title": ai_data.get("title", f"The {target_category.title()} Path"),
-        "description": ai_data.get("description", f"Strengthen your {target_category} today."),
+        "description": ai_data.get("description", challenge),
         "target_category": target_category,
         "bonus_points": points,
         "criteria": criteria,

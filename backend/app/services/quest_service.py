@@ -138,18 +138,12 @@ async def build_quest_summaries(db: AsyncSession, user_id: uuid.UUID, quests: li
     """Build rich QuestSummary with progress info. Auto-marks claimable if criteria met."""
     summaries = []
     now = datetime.now(UTC)
-    dirty = False
 
     for q in quests:
         if q.status in ("completed", "expired"):
             continue
 
         progress_current, progress_target = await _get_progress(db, user_id, q)
-
-        # Auto-mark as claimable if progress is complete
-        if progress_current >= progress_target and q.status == "active":
-            q.status = "ready_to_claim"
-            dirty = True
 
         is_claimable = q.status == "ready_to_claim"
         expires_in = max(0, int((q.expires_at - now).total_seconds() / 3600)) if q.expires_at else None
@@ -168,9 +162,6 @@ async def build_quest_summaries(db: AsyncSession, user_id: uuid.UUID, quests: li
             expires_in_hours=expires_in,
         ))
 
-    if dirty:
-        await db.commit()
-
     return summaries
 
 
@@ -179,9 +170,10 @@ async def build_quest_summaries(db: AsyncSession, user_id: uuid.UUID, quests: li
 async def _evaluate_criteria(db: AsyncSession, user_id: uuid.UUID, quest: Quest) -> bool:
     criteria = quest.criteria_json
     ctype = criteria.get("type", "")
+    after = quest.created_at  # only count completions after quest was created
 
     if ctype == "complete_n_habits":
-        count = await _count_completions(db, user_id, criteria.get("category"), criteria.get("within", "day"))
+        count = await _count_completions(db, user_id, criteria.get("category"), criteria.get("within", "day"), after)
         return count >= criteria.get("count", 1)
 
     if ctype == "maintain_streak":
@@ -189,11 +181,11 @@ async def _evaluate_criteria(db: AsyncSession, user_id: uuid.UUID, quest: Quest)
         return score.streak_days >= criteria.get("days", 3) if score else False
 
     if ctype == "any_completion":
-        count = await _count_completions(db, user_id, criteria.get("category", quest.target_category), "day")
+        count = await _count_completions(db, user_id, criteria.get("category", quest.target_category), "day", after)
         return count >= 1
 
     if ctype == "total_completions":
-        count = await _count_completions(db, user_id, None, criteria.get("within", "week"))
+        count = await _count_completions(db, user_id, None, criteria.get("within", "week"), after)
         return count >= criteria.get("count", 5)
 
     return False
@@ -203,9 +195,10 @@ async def _get_progress(db: AsyncSession, user_id: uuid.UUID, quest: Quest) -> t
     """Return (current, target) for progress display."""
     criteria = quest.criteria_json
     ctype = criteria.get("type", "")
+    after = quest.created_at  # only count completions after quest was created
 
     if ctype == "complete_n_habits":
-        current = await _count_completions(db, user_id, criteria.get("category"), criteria.get("within", "day"))
+        current = await _count_completions(db, user_id, criteria.get("category"), criteria.get("within", "day"), after)
         return min(current, criteria["count"]), criteria["count"]
 
     if ctype == "maintain_streak":
@@ -215,11 +208,11 @@ async def _get_progress(db: AsyncSession, user_id: uuid.UUID, quest: Quest) -> t
         return min(days, target), target
 
     if ctype == "any_completion":
-        current = await _count_completions(db, user_id, criteria.get("category", quest.target_category), "day")
+        current = await _count_completions(db, user_id, criteria.get("category", quest.target_category), "day", after)
         return min(current, 1), 1
 
     if ctype == "total_completions":
-        current = await _count_completions(db, user_id, None, criteria.get("within", "week"))
+        current = await _count_completions(db, user_id, None, criteria.get("within", "week"), after)
         target = criteria.get("count", 5)
         return min(current, target), target
 
@@ -268,7 +261,10 @@ def _build_comeback_quest(category: str, scores: dict) -> dict | None:
 
 # --- Helpers ---
 
-async def _count_completions(db: AsyncSession, user_id: uuid.UUID, category: str | None, within: str) -> int:
+async def _count_completions(
+    db: AsyncSession, user_id: uuid.UUID, category: str | None, within: str,
+    after: datetime | None = None,
+) -> int:
     today = date.today()
     q = select(func.count()).select_from(HabitCompletion).where(
         HabitCompletion.user_id == user_id,
@@ -281,6 +277,9 @@ async def _count_completions(db: AsyncSession, user_id: uuid.UUID, category: str
     elif within == "week":
         monday = today - timedelta(days=today.weekday())
         q = q.where(HabitCompletion.date >= monday)
+    # Only count completions after quest creation
+    if after:
+        q = q.where(HabitCompletion.created_at >= after)
     result = await db.execute(q)
     return result.scalar() or 0
 
