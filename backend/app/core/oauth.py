@@ -37,7 +37,10 @@ async def github_callback(code: str) -> OAuthUserInfo:
             headers={"Accept": "application/json"},
         )
         token_resp.raise_for_status()
-        access_token = token_resp.json()["access_token"]
+        token_data = token_resp.json()
+        if "error" in token_data:
+            raise ValueError(f"GitHub OAuth error: {token_data.get('error_description', token_data['error'])}")
+        access_token = token_data["access_token"]
 
         user_resp = await client.get(
             "https://api.github.com/user",

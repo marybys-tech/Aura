@@ -20,6 +20,10 @@ api_router.include_router(stats_router)
 api_router.include_router(quests_router)
 api_router.include_router(ai_master_router)
 
+# Dev/testing routes (remove in production)
+from app.api.dev import router as dev_router  # noqa: E402
+api_router.include_router(dev_router)
+
 
 @api_router.get("/health", tags=["Health"])
 async def health_check():
