@@ -24,9 +24,11 @@ class QuestSummary(BaseModel):
     target_category: str
     bonus_points: float
     quest_type: str
-    status: str
-
-    model_config = {"from_attributes": True}
+    status: str  # "active", "ready_to_claim", "completed", "expired"
+    progress_current: int = 0
+    progress_target: int = 1
+    is_claimable: bool = False
+    expires_in_hours: int | None = None
 
 
 class TodayResponse(BaseModel):

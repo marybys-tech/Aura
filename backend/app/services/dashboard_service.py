@@ -168,7 +168,9 @@ async def _get_scores(db: AsyncSession, user_id: uuid.UUID) -> dict[str, Categor
 
 
 async def _get_active_quests(db: AsyncSession, user_id: uuid.UUID) -> list[QuestSummary]:
+    from app.services.quest_service import build_quest_summaries
     result = await db.execute(
-        select(Quest).where(Quest.user_id == user_id, Quest.status == "active")
+        select(Quest).where(Quest.user_id == user_id, Quest.status.in_(["active", "ready_to_claim"]))
     )
-    return [QuestSummary.model_validate(q) for q in result.scalars().all()]
+    quests = list(result.scalars().all())
+    return await build_quest_summaries(db, user_id, quests)

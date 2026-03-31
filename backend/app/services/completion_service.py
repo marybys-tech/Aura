@@ -66,6 +66,11 @@ async def record_completion(
         trigger_ref_id=completion.id,
     )
 
+    # Check quest progress after completion
+    if status == CompletionStatus.COMPLETED:
+        from app.services.quest_service import check_quest_progress
+        await check_quest_progress(db, user_id, habit.category)
+
     return completion, score, narration
 
 

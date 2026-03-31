@@ -95,6 +95,10 @@ export interface QuestSummary {
   bonus_points: number;
   quest_type: string;
   status: string;
+  progress_current: number;
+  progress_target: number;
+  is_claimable: boolean;
+  expires_in_hours: number | null;
 }
 
 export interface TodayResponse {

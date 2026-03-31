@@ -2,7 +2,6 @@
 
 import json
 import logging
-import random
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,16 +19,6 @@ SYSTEM_PROMPT = (
     "and occasional playful humor. Max 2 sentences. Never reference the app directly."
 )
 
-FALLBACK_QUOTES = [
-    "The bamboo that bends is stronger than the oak that resists.",
-    "A journey of a thousand miles begins with a single step.",
-    "The river does not drink its own water. Growth comes from what you give.",
-    "Yesterday is history, tomorrow is a mystery. Today is a gift.",
-    "Even the tallest mountain began as a grain of sand with ambition.",
-    "Patience is not the ability to wait, but how you act while waiting.",
-    "The seed does not see the sun, yet it grows toward the light.",
-]
-
 
 async def generate_narration(
     db: AsyncSession,
@@ -41,8 +30,8 @@ async def generate_narration(
     score: float,
     consecutive_skips: int = 0,
     trigger_ref_id: uuid.UUID | None = None,
-) -> Narration:
-    """Generate an AI narration for a completion or skip event."""
+) -> Narration | None:
+    """Generate an AI narration. Returns None if Bedrock fails."""
     if trigger_type == "completion":
         prompt = (
             f'Event: habit_completed\nHabit: "{habit_title}" (category: {category})\n'
@@ -58,7 +47,8 @@ async def generate_narration(
 
     content = await bedrock_client.invoke_model(prompt, system=SYSTEM_PROMPT, max_tokens=150)
     if not content:
-        content = random.choice(FALLBACK_QUOTES)
+        logger.error("Bedrock narration failed for user %s, habit '%s'", user_id, habit_title)
+        return None
 
     narration = Narration(
         user_id=user_id,
@@ -72,46 +62,63 @@ async def generate_narration(
     return narration
 
 
-async def generate_quest_data(scores: dict[str, float], habits: list[str], quest_type: str) -> dict | None:
-    """Generate quest via AI. Returns parsed dict or None on failure."""
-    sorted_scores = sorted(scores.items(), key=lambda x: x[1])
-    weakest = sorted_scores[0] if sorted_scores else ("intelligence", 0)
-    strongest = sorted_scores[-1] if sorted_scores else ("intelligence", 0)
+async def generate_quest_data(
+    target_category: str,
+    habits: list[str],
+    quest_type: str,
+    vitality: float,
+) -> dict | None:
+    """Generate quest creative content via AI for a specific category."""
+    import random
 
-    points_range = "3.0-8.0" if quest_type == "daily" else "10.0-20.0"
+    points = round(random.uniform(3.0, 8.0) if quest_type == "daily" else random.uniform(10.0, 20.0), 1)
+    criteria_types = ["complete_n_habits", "any_completion", "maintain_streak", "total_completions"]
+    criteria_type = random.choice(criteria_types)
 
     prompt = (
-        f"Generate a {quest_type} quest for this student.\n\n"
-        f"Student profile:\n- Scores: {json.dumps(scores)}\n"
-        f"- Weakest category: {weakest[0]} ({weakest[1]})\n"
-        f"- Strongest category: {strongest[0]} ({strongest[1]})\n"
-        f"- Active habits: {', '.join(habits)}\n\n"
-        f"Rules:\n- Target the student's weakest or second-weakest category\n"
-        f"- Bonus points between {points_range}\n\n"
+        f"Create a {quest_type} quest for the category '{target_category}'.\n"
+        f"The student's {target_category} vitality is {vitality}/100.\n"
+        f"Their habits include: {', '.join(habits[:5])}\n\n"
+        f"Give it a creative, evocative title (like 'The Scholar's Trial' or 'Path of Iron Will').\n"
+        f"Write a 1-2 sentence description in wise mentor voice (Master Oogway style).\n\n"
         "Return JSON only:\n"
-        '{"title": "string", "description": "string", "target_category": "string", '
-        '"bonus_points": number, "criteria": {"type": "complete_n_habits", "category": "string", "count": number, "within": "day|week"}}'
+        '{"title": "string", "description": "string"}'
     )
 
-    system = (
-        "You are Master Aura, designing training challenges. "
-        "Return valid JSON only, nothing else."
-    )
+    system = "You are Master Aura, a wise mentor. Return valid JSON only, nothing else."
 
     result = await bedrock_client.invoke_model(
-        prompt,
-        system=system,
-        model_id=settings.BEDROCK_QUEST_MODEL,
-        max_tokens=300,
-        temperature=0.5,
+        prompt, system=system, model_id=settings.BEDROCK_QUEST_MODEL,
+        max_tokens=200, temperature=0.8,
     )
     if not result:
+        logger.error("Bedrock quest generation failed for category=%s", target_category)
         return None
 
     try:
-        data = json.loads(result)
-        data["quest_type"] = quest_type
-        return data
+        ai_data = json.loads(result)
     except (json.JSONDecodeError, KeyError):
-        logger.warning("Failed to parse quest JSON: %s", result)
+        logger.error("Failed to parse quest JSON: %s", result)
         return None
+
+    # Build criteria in code (reliable, not AI)
+    if criteria_type == "complete_n_habits":
+        count = random.choice([1, 2, 3])
+        criteria = {"type": "complete_n_habits", "category": target_category, "count": count, "within": "day" if quest_type == "daily" else "week"}
+    elif criteria_type == "maintain_streak":
+        days = random.choice([3, 5, 7]) if quest_type == "weekly" else 2
+        criteria = {"type": "maintain_streak", "category": target_category, "days": days}
+    elif criteria_type == "any_completion":
+        criteria = {"type": "any_completion", "category": target_category}
+    else:
+        count = random.choice([3, 5, 7])
+        criteria = {"type": "total_completions", "count": count, "within": "day" if quest_type == "daily" else "week"}
+
+    return {
+        "quest_type": quest_type,
+        "title": ai_data.get("title", f"The {target_category.title()} Path"),
+        "description": ai_data.get("description", f"Strengthen your {target_category} today."),
+        "target_category": target_category,
+        "bonus_points": points,
+        "criteria": criteria,
+    }

@@ -1,0 +1,114 @@
+{
+  "name": "projects/88855905242970159",
+  "projectId": "88855905242970159",
+  "title": "Aura - Gamified Habit Tracker",
+  "visibility": "PRIVATE",
+  "createTime": "2026-03-30T10:22:57.888335Z",
+  "updateTime": "2026-03-30T12:00:00.000000Z",
+  "projectType": "PROJECT_DESIGN",
+  "origin": "STITCH",
+  "designTheme": {
+    "colorMode": "DARK",
+    "headlineFont": "SPACE_GROTESK",
+    "bodyFont": "INTER",
+    "labelFont": "INTER",
+    "roundness": "ROUND_TWELVE",
+    "customColor": "#A78BFA",
+    "colorVariant": "VIBRANT",
+    "overrideSecondaryColor": "#34D399",
+    "overrideTertiaryColor": "#F472B6"
+  },
+  "designSystemAssetId": "1706011350000909072",
+  "screens": {
+    "login-desktop": {
+      "id": "722d469523c84159bc461fc2f265a9ce",
+      "sourceScreen": "projects/88855905242970159/screens/722d469523c84159bc461fc2f265a9ce",
+      "deviceType": "DESKTOP",
+      "width": 2560,
+      "height": 2048,
+      "title": "Aura - Login"
+    },
+    "login-mobile": {
+      "id": "1b6c2fde948847e8bf9c64166e6db05a",
+      "sourceScreen": "projects/88855905242970159/screens/1b6c2fde948847e8bf9c64166e6db05a",
+      "deviceType": "MOBILE",
+      "width": 780,
+      "height": 1768,
+      "title": "Aura Mobile Login"
+    },
+    "dashboard-today-desktop": {
+      "id": "6d5ed131a81e436eb8f5fb546fb65acd",
+      "sourceScreen": "projects/88855905242970159/screens/6d5ed131a81e436eb8f5fb546fb65acd",
+      "deviceType": "DESKTOP",
+      "width": 2560,
+      "height": 2328,
+      "title": "Aura - Main Dashboard (Today)"
+    },
+    "dashboard-today-mobile": {
+      "id": "8048cce3ce4f48ebb1a583802a5978c7",
+      "sourceScreen": "projects/88855905242970159/screens/8048cce3ce4f48ebb1a583802a5978c7",
+      "deviceType": "MOBILE",
+      "width": 780,
+      "height": 4000,
+      "title": "Aura Mobile Today Dashboard"
+    },
+    "habits-desktop": {
+      "id": "99ca27a8b8274ff09f16c8054555ceea",
+      "sourceScreen": "projects/88855905242970159/screens/99ca27a8b8274ff09f16c8054555ceea",
+      "deviceType": "DESKTOP",
+      "width": 2560,
+      "height": 2104,
+      "title": "Aura - Habits Management"
+    },
+    "habits-mobile": {
+      "id": "ef55d276d9a44673a122e3601bd043af",
+      "sourceScreen": "projects/88855905242970159/screens/ef55d276d9a44673a122e3601bd043af",
+      "deviceType": "MOBILE",
+      "width": 780,
+      "height": 2344,
+      "title": "Aura - Habits Management (Mobile)"
+    },
+    "dashboard-week-desktop": {
+      "id": "59f3c491107c4fa480425fdc521dcfec",
+      "sourceScreen": "projects/88855905242970159/screens/59f3c491107c4fa480425fdc521dcfec",
+      "deviceType": "DESKTOP",
+      "width": 2560,
+      "height": 2144,
+      "title": "Aura Dashboard - Weekly View"
+    },
+    "dashboard-week-mobile": {
+      "id": "7cba5ab209cc45658695f99b45f41acc",
+      "sourceScreen": "projects/88855905242970159/screens/7cba5ab209cc45658695f99b45f41acc",
+      "deviceType": "MOBILE",
+      "width": 780,
+      "height": 2746,
+      "title": "Aura - Week Dashboard (Mobile)"
+    },
+    "dashboard-month-desktop": {
+      "id": "ca027174b53c4ce3ba0da56cfe475f02",
+      "sourceScreen": "projects/88855905242970159/screens/ca027174b53c4ce3ba0da56cfe475f02",
+      "deviceType": "DESKTOP",
+      "width": 2560,
+      "height": 2048,
+      "title": "Aura - Month View Dashboard"
+    },
+    "dashboard-month-mobile": {
+      "id": "f4e81ff738c24b91b7624c996d62a54a",
+      "sourceScreen": "projects/88855905242970159/screens/f4e81ff738c24b91b7624c996d62a54a",
+      "deviceType": "MOBILE",
+      "width": 780,
+      "height": 2856,
+      "title": "Aura - Month View (Mobile)"
+    }
+  },
+  "discarded_screens": [
+    "4ee95e4d1439482994452b7b7229e76b (Dashboard Today v1 - starburst)",
+    "7920540f1ace4ed5838471ef12db6af0 (Dashboard Today v2 - small blob)",
+    "51032dc74ca14ce488759b810f2d8056 (Dashboard Today v3 - muted atmospheric)",
+    "027af2ee47fa4a228aa5bc08d8425c92 (Dashboard Today v4 - full-bleed attempt)",
+    "0edcca1fc9f54cb99df0afb3b236c779 (Month Desktop duplicate - March Flow)"
+  ],
+  "metadata": {
+    "userRole": "OWNER"
+  }
+}

@@ -1,4 +1,4 @@
-"""Thin wrapper over AWS Bedrock for Claude model invocations."""
+"""Thin wrapper over AWS Bedrock — supports both Anthropic and Amazon Nova models."""
 
 import json
 import logging
@@ -25,15 +25,26 @@ def _get_client():
     return _client
 
 
-async def invoke_model(
-    prompt: str,
-    system: str = "",
-    model_id: str | None = None,
-    max_tokens: int = 200,
-    temperature: float = 0.8,
-) -> str | None:
-    """Invoke a Bedrock Claude model. Returns response text or None on failure."""
-    model = model_id or settings.BEDROCK_NARRATION_MODEL
+def _is_nova(model_id: str) -> bool:
+    return "nova" in model_id.lower()
+
+
+def _build_body(model: str, prompt: str, system: str, max_tokens: int, temperature: float) -> dict:
+    """Build request body — different format for Anthropic vs Nova."""
+    if _is_nova(model):
+        messages = [{"role": "user", "content": [{"text": prompt}]}]
+        body: dict = {
+            "messages": messages,
+            "inferenceConfig": {
+                "maxTokens": max_tokens,
+                "temperature": temperature,
+            },
+        }
+        if system:
+            body["system"] = [{"text": system}]
+        return body
+
+    # Anthropic format
     messages = [{"role": "user", "content": prompt}]
     body = {
         "anthropic_version": "bedrock-2023-05-31",
@@ -43,6 +54,26 @@ async def invoke_model(
     }
     if system:
         body["system"] = system
+    return body
+
+
+def _parse_response(model: str, result: dict) -> str:
+    """Extract text from response — different structure for Anthropic vs Nova."""
+    if _is_nova(model):
+        return result["output"]["message"]["content"][0]["text"]
+    return result["content"][0]["text"]
+
+
+async def invoke_model(
+    prompt: str,
+    system: str = "",
+    model_id: str | None = None,
+    max_tokens: int = 200,
+    temperature: float = 0.8,
+) -> str | None:
+    """Invoke a Bedrock model. Returns response text or None on failure."""
+    model = model_id or settings.BEDROCK_NARRATION_MODEL
+    body = _build_body(model, prompt, system, max_tokens, temperature)
 
     try:
         client = _get_client()
@@ -53,7 +84,7 @@ async def invoke_model(
             body=json.dumps(body),
         )
         result = json.loads(response["body"].read())
-        return result["content"][0]["text"]
+        return _parse_response(model, result)
     except (ClientError, KeyError, json.JSONDecodeError) as e:
-        logger.warning("Bedrock invocation failed: %s", e)
+        logger.error("BEDROCK FAILED [model=%s]: %s", model, e)
         return None
