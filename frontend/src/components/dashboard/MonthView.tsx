@@ -1,5 +1,5 @@
 import { useDashboardMonth } from "@/hooks/useDashboard";
-import AuraPlaceholder from "@/components/aura/AuraPlaceholder";
+import AuraCanvas from "@/components/aura/AuraCanvas";
 import StatsPanel from "./StatsPanel";
 import QuestSection from "./QuestSection";
 
@@ -16,7 +16,7 @@ export default function MonthView() {
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
       <div className="space-y-4">
-        <AuraPlaceholder scores={data.scores} />
+        <AuraCanvas scores={data.scores} />
 
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="mb-3 flex items-center justify-between">

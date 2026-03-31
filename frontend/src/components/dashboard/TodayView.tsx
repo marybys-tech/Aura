@@ -1,11 +1,14 @@
 import { useDashboardToday } from "@/hooks/useDashboard";
-import AuraPlaceholder from "@/components/aura/AuraPlaceholder";
+import { useAuraStore } from "@/stores/aura";
+import AuraCanvas from "@/components/aura/AuraCanvas";
 import StatsPanel from "./StatsPanel";
 import QuestSection from "./QuestSection";
 import HabitCard from "./HabitCard";
 
 export default function TodayView() {
   const { data, isLoading } = useDashboardToday();
+
+  const { lastFlareCategory, flareSeq } = useAuraStore();
 
   if (isLoading) return <ViewSkeleton />;
   if (!data) return null;
@@ -16,7 +19,7 @@ export default function TodayView() {
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
       <div className="space-y-4">
-        <AuraPlaceholder scores={data.scores} />
+        <AuraCanvas scores={data.scores} flareCategory={lastFlareCategory} flareSeq={flareSeq} />
 
         <div>
           <div className="mb-3 flex items-center justify-between">

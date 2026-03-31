@@ -2,6 +2,7 @@ import type { DashboardHabit, Category } from "@/types";
 import { getCategoryColor, getCategoryLabel, todayISO } from "@/lib/category";
 import { useCompleteHabit, useSkipHabit } from "@/hooks/useHabits";
 import { useMasterStore } from "@/stores/master";
+import { useAuraStore } from "@/stores/aura";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 
@@ -13,6 +14,7 @@ export default function HabitCard({ habit }: HabitCardProps) {
   const complete = useCompleteHabit();
   const skip = useSkipHabit();
   const showMaster = useMasterStore((s) => s.show);
+  const triggerFlare = useAuraStore((s) => s.triggerFlare);
   const color = getCategoryColor(habit.category);
   const isPending = habit.status === "pending";
   const isDone = habit.status === "completed";
@@ -22,6 +24,7 @@ export default function HabitCard({ habit }: HabitCardProps) {
       { habitId: habit.id, date: todayISO() },
       {
         onSuccess: (data) => {
+          triggerFlare(habit.category);
           if (data.narration) {
             showMaster({ content: data.narration.content, category: habit.category });
           }
