@@ -60,7 +60,7 @@ export default function HabitsPage() {
         </div>
       )}
 
-      <AddHabitDialog open={addOpen} onOpenChange={setAddOpen} />
+      <AddHabitDialog open={addOpen} onOpenChange={setAddOpen} defaultCategory={filter as Category | undefined} />
     </div>
   );
 }

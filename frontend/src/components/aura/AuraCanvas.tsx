@@ -32,13 +32,6 @@ export default function AuraCanvas({ scores, flareCategory, flareSeq }: AuraCanv
   const isDark = useThemeStore((s) => s.theme) === "dark";
 
   // Compute total Aura power: Σ (level × (vitality/100 + 0.2))
-  const totalAura = useMemo(() => {
-    let total = 0;
-    for (const s of Object.values(scores)) {
-      if (s) total += s.level * (s.vitality / 100 + 0.2);
-    }
-    return Math.round(total * 10) / 10;
-  }, [scores]);
 
   const vitalities = useMemo(
     () => BLOBS.map((b) => scores[b.category]?.vitality ?? 0),
@@ -178,12 +171,6 @@ export default function AuraCanvas({ scores, flareCategory, flareSeq }: AuraCanv
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-1">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Your Aura
-        </span>
-        <span className="text-2xl font-bold tracking-tight">{totalAura}</span>
-      </div>
     </div>
   );
 }

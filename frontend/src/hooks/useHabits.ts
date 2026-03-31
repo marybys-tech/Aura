@@ -32,7 +32,10 @@ export function useCreateHabit() {
       schedule_days?: number[];
       times_per_day?: number;
     }) => (await api.post("/habits", data)).data as Habit,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["habits"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["habits"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }
 
@@ -49,7 +52,10 @@ export function useDeleteHabit() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => (await api.delete(`/habits/${id}`)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["habits"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["habits"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCreateHabit } from "@/hooks/useHabits";
 import { ALL_CATEGORIES } from "@/lib/constants";
 import type { Category } from "@/types";
@@ -17,15 +17,16 @@ import {
 interface AddHabitDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultCategory?: Category;
 }
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-export default function AddHabitDialog({ open, onOpenChange }: AddHabitDialogProps) {
+export default function AddHabitDialog({ open, onOpenChange, defaultCategory }: AddHabitDialogProps) {
   const createHabit = useCreateHabit();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<Category>("intelligence");
+  const [category, setCategory] = useState<Category>(defaultCategory ?? "intelligence");
   const [scheduleType, setScheduleType] = useState<string>("daily");
   const [scheduleDays, setScheduleDays] = useState<number[]>([]);
   const [timesPerDay, setTimesPerDay] = useState(2);
@@ -33,11 +34,16 @@ export default function AddHabitDialog({ open, onOpenChange }: AddHabitDialogPro
   const reset = () => {
     setTitle("");
     setDescription("");
-    setCategory("intelligence");
+    setCategory(defaultCategory ?? "intelligence");
     setScheduleType("daily");
     setScheduleDays([]);
     setTimesPerDay(2);
   };
+
+  // Sync category when defaultCategory changes (e.g. filter changed)
+  useEffect(() => {
+    if (defaultCategory) setCategory(defaultCategory);
+  }, [defaultCategory]);
 
   const handleSubmit = () => {
     createHabit.mutate(
