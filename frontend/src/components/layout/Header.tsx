@@ -35,14 +35,12 @@ export default function Header() {
 
         {user && (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-9 gap-2 px-2">
-                <Avatar className="h-7 w-7">
-                  <AvatarImage src={user.avatar_url ?? undefined} />
-                  <AvatarFallback className="text-xs">{user.display_name[0]}</AvatarFallback>
-                </Avatar>
-                <span className="hidden text-sm font-medium lg:inline">{user.display_name}</span>
-              </Button>
+            <DropdownMenuTrigger className="flex h-9 items-center gap-2 rounded-md px-2 text-sm font-medium hover:bg-accent focus:outline-none">
+              <Avatar className="h-7 w-7">
+                <AvatarImage src={user.avatar_url ?? undefined} />
+                <AvatarFallback className="text-xs">{user.display_name[0]}</AvatarFallback>
+              </Avatar>
+              <span className="hidden lg:inline">{user.display_name}</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => logout.mutate()}>

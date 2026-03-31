@@ -25,7 +25,10 @@ export interface User {
 
 export interface CategoryScore {
   category: Category;
-  score: number;
+  level: number;
+  xp: number;
+  xp_to_next: number;
+  vitality: number;
   streak_days: number;
   longest_streak: number;
 }

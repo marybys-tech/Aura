@@ -3,6 +3,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import BottomNav from "@/components/layout/BottomNav";
 import MasterPopup from "@/components/master/MasterPopup";
+import DevPanel from "@/components/dashboard/DevPanel";
 import LoginPage from "@/pages/LoginPage";
 import OAuthCallbackPage from "@/pages/OAuthCallbackPage";
 import DashboardPage from "@/pages/DashboardPage";
@@ -47,6 +48,7 @@ const authenticatedRoute = createRoute({
           <BottomNav />
         </div>
         <MasterPopup />
+        <DevPanel />
       </div>
     );
   },
