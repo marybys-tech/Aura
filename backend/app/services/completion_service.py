@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, timedelta
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.constants import CompletionStatus
@@ -20,7 +20,7 @@ async def record_completion(
     completion_date: date,
     status: CompletionStatus,
 ) -> tuple[HabitCompletion, CategoryScore, Narration | None]:
-    """Record a completion or skip, update score, generate narration, return all three."""
+    """Record a completion or skip, update level/vitality, generate narration."""
     habit = await _get_owned_habit(db, habit_id, user_id)
 
     existing = await _get_existing(db, habit_id, completion_date)
@@ -29,29 +29,31 @@ async def record_completion(
 
     if status == CompletionStatus.COMPLETED:
         streak = await _calculate_streak(db, habit_id, completion_date)
-        points = stats_engine.completion_points(streak)
+        xp_earned = stats_engine.completion_xp(streak)
         consecutive_skips = 0
     else:
         streak = 0
+        xp_earned = 0.0
         consecutive_skips = await _count_consecutive_skips(db, habit_id, completion_date) + 1
-        points = stats_engine.skip_penalty(consecutive_skips)
 
+    # Points delta for the completion record (XP earned or 0 for skip)
     completion = HabitCompletion(
         habit_id=habit_id,
         user_id=user_id,
         date=completion_date,
         status=status.value,
-        points_delta=round(points, 2),
+        points_delta=round(xp_earned, 2),
     )
     db.add(completion)
 
-    score = await _update_score(db, user_id, habit.category, points, status)
+    # Update level, XP, and vitality
+    score = await _update_score(db, user_id, habit.category, xp_earned, status, streak)
 
     await db.commit()
     await db.refresh(completion)
     await db.refresh(score)
 
-    # Generate AI Master narration (non-blocking — if Bedrock fails, returns fallback)
+    # Generate AI Master narration
     narration = await ai_master_service.generate_narration(
         db=db,
         user_id=user_id,
@@ -59,7 +61,7 @@ async def record_completion(
         habit_title=habit.title,
         category=habit.category,
         streak=streak,
-        score=score.score,
+        score=score.vitality,
         consecutive_skips=consecutive_skips,
         trigger_ref_id=completion.id,
     )
@@ -101,7 +103,6 @@ async def _get_existing(db: AsyncSession, habit_id: uuid.UUID, d: date) -> Habit
 
 
 async def _calculate_streak(db: AsyncSession, habit_id: uuid.UUID, current_date: date) -> int:
-    """Count consecutive completed days before current_date."""
     result = await db.execute(
         select(HabitCompletion.date)
         .where(
@@ -124,7 +125,6 @@ async def _calculate_streak(db: AsyncSession, habit_id: uuid.UUID, current_date:
 
 
 async def _count_consecutive_skips(db: AsyncSession, habit_id: uuid.UUID, current_date: date) -> int:
-    """Count consecutive skipped days before current_date."""
     result = await db.execute(
         select(HabitCompletion.date, HabitCompletion.status)
         .where(HabitCompletion.habit_id == habit_id, HabitCompletion.date < current_date)
@@ -144,8 +144,9 @@ async def _update_score(
     db: AsyncSession,
     user_id: uuid.UUID,
     category: str,
-    points: float,
+    xp_earned: float,
     status: CompletionStatus,
+    streak: int,
 ) -> CategoryScore:
     result = await db.execute(
         select(CategoryScore).where(
@@ -153,12 +154,23 @@ async def _update_score(
         )
     )
     score = result.scalar_one()
-    score.score = stats_engine.clamp_score(score.score + points)
 
     if status == CompletionStatus.COMPLETED:
-        score.streak_days += 1
+        # Apply XP and level up
+        new_xp, new_level, _ = stats_engine.apply_xp(score.xp, score.level, xp_earned)
+        score.xp = new_xp
+        score.level = new_level
+        score.xp_to_next = round(stats_engine.xp_for_level(new_level), 2)
+
+        # Boost vitality
+        score.vitality = stats_engine.vitality_on_completion(score.vitality)
+
+        # Update streak
+        score.streak_days = streak + 1
         score.longest_streak = max(score.longest_streak, score.streak_days)
     else:
+        # Skip: no XP, reduce vitality
+        score.vitality = stats_engine.vitality_on_skip(score.vitality)
         score.streak_days = 0
 
     return score

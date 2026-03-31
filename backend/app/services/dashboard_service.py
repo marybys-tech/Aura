@@ -141,8 +141,30 @@ async def _get_completions_range(
 
 
 async def _get_scores(db: AsyncSession, user_id: uuid.UUID) -> dict[str, CategoryScoreResponse]:
+    """Get scores with lazy vitality decay — applies -10/day for each inactive day since last update."""
     result = await db.execute(select(CategoryScore).where(CategoryScore.user_id == user_id))
-    return {s.category: CategoryScoreResponse.model_validate(s) for s in result.scalars().all()}
+    rows = list(result.scalars().all())
+    today = date.today()
+    dirty = False
+
+    for s in rows:
+        if s.updated_at:
+            last_date = s.updated_at.date()
+            inactive_days = (today - last_date).days
+            if inactive_days > 0 and s.vitality > 0:
+                from app.services.stats_engine import vitality_daily_decay
+                for _ in range(inactive_days):
+                    s.vitality = vitality_daily_decay(s.vitality)
+                    if s.vitality <= 0:
+                        break
+                dirty = True
+
+    if dirty:
+        await db.commit()
+        for s in rows:
+            await db.refresh(s)
+
+    return {s.category: CategoryScoreResponse.model_validate(s) for s in rows}
 
 
 async def _get_active_quests(db: AsyncSession, user_id: uuid.UUID) -> list[QuestSummary]:

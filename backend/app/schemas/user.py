@@ -16,8 +16,12 @@ class UserResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class UserScoreSummary(BaseModel):
+    level: int
+    vitality: float
+
 class UserWithScoresResponse(UserResponse):
-    scores: dict[str, float] = Field(default_factory=dict)
+    scores: dict[str, UserScoreSummary] = Field(default_factory=dict)
 
 
 class UserUpdateRequest(BaseModel):

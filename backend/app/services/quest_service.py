@@ -9,6 +9,7 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.models.category_score import CategoryScore
 from app.models.quest import Quest
 from app.services import stats_engine
+from app.services.stats_engine import apply_xp, vitality_on_completion, xp_for_level
 
 
 async def get_quests(db: AsyncSession, user_id: uuid.UUID) -> list[Quest]:
@@ -59,7 +60,12 @@ async def claim_quest(db: AsyncSession, quest_id: uuid.UUID, user_id: uuid.UUID)
         )
     )
     score = score_result.scalar_one()
-    score.score = stats_engine.clamp_score(score.score + quest.bonus_points)
+    # Quest reward: XP + vitality boost
+    new_xp, new_level, _ = stats_engine.apply_xp(score.xp, score.level, quest.bonus_points)
+    score.xp = new_xp
+    score.level = new_level
+    score.xp_to_next = round(stats_engine.xp_for_level(new_level), 2)
+    score.vitality = stats_engine.vitality_on_completion(score.vitality)
 
     await db.commit()
     await db.refresh(quest)

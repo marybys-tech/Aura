@@ -11,7 +11,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get("/me", response_model=UserWithScoresResponse, summary="Get current user profile with scores")
 async def get_me(user: User = Depends(get_current_user)):
-    scores = {s.category: s.score for s in user.category_scores}
+    scores = {s.category: {"level": s.level, "vitality": s.vitality} for s in user.category_scores}
     return UserWithScoresResponse(
         id=user.id,
         email=user.email,
@@ -36,7 +36,7 @@ async def update_me(
         user.timezone = body.timezone
     await db.commit()
     await db.refresh(user)
-    scores = {s.category: s.score for s in user.category_scores}
+    scores = {s.category: {"level": s.level, "vitality": s.vitality} for s in user.category_scores}
     return UserWithScoresResponse(
         id=user.id,
         email=user.email,

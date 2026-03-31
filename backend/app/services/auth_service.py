@@ -42,9 +42,16 @@ async def upsert_user_from_oauth(db: AsyncSession, info: OAuthUserInfo) -> User:
 
 
 async def _init_category_scores(db: AsyncSession, user_id: uuid.UUID) -> None:
-    """Initialize 6 category score rows for a new user."""
+    """Initialize 6 category score rows for a new user with vitality 50."""
     for cat in ALL_CATEGORIES:
-        db.add(CategoryScore(user_id=user_id, category=cat.value))
+        db.add(CategoryScore(
+            user_id=user_id,
+            category=cat.value,
+            level=0,
+            xp=0.0,
+            xp_to_next=10.0,
+            vitality=50.0,
+        ))
 
 
 async def issue_tokens(db: AsyncSession, user: User) -> TokenResponse:

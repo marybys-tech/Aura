@@ -40,7 +40,7 @@ async def generate_quest(
     db: AsyncSession = Depends(get_db),
 ):
     scores_result = await db.execute(select(CategoryScore).where(CategoryScore.user_id == user.id))
-    scores = {s.category: s.score for s in scores_result.scalars().all()}
+    scores = {s.category: s.vitality for s in scores_result.scalars().all()}
 
     habits_result = await db.execute(
         select(Habit.title).where(Habit.user_id == user.id, Habit.is_active == True)  # noqa: E712

@@ -27,7 +27,10 @@ class CompletionWithScoreResponse(BaseModel):
 
 class CategoryScoreResponse(BaseModel):
     category: str
-    score: float
+    level: int
+    xp: float
+    xp_to_next: float
+    vitality: float
     streak_days: int
     longest_streak: int
 
