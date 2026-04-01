@@ -1,0 +1,39 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_db
+from app.dependencies import get_current_user
+from app.models.user import User
+from app.schemas.user import UserUpdateRequest, UserWithScoresResponse
+
+router = APIRouter(prefix="/users", tags=["Users"])
+
+
+def _build_user_response(user: User) -> UserWithScoresResponse:
+    """Build user response with scores — shared by get and update."""
+    scores = {s.category: {"level": s.level, "vitality": s.vitality} for s in user.category_scores}
+    return UserWithScoresResponse(
+        id=user.id, email=user.email, display_name=user.display_name,
+        avatar_url=user.avatar_url, oauth_provider=user.oauth_provider,
+        timezone=user.timezone, created_at=user.created_at, scores=scores,
+    )
+
+
+@router.get("/me", response_model=UserWithScoresResponse, summary="Get current user profile with scores")
+async def get_me(user: User = Depends(get_current_user)):
+    return _build_user_response(user)
+
+
+@router.patch("/me", response_model=UserWithScoresResponse, summary="Update user profile")
+async def update_me(
+    body: UserUpdateRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if body.display_name is not None:
+        user.display_name = body.display_name
+    if body.timezone is not None:
+        user.timezone = body.timezone
+    await db.commit()
+    await db.refresh(user)
+    return _build_user_response(user)

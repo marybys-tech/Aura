@@ -7,9 +7,9 @@ A game-like habit dashboard where you manage habits by categories, visualize pro
 | Layer    | Technology                                                                  |
 | -------- | --------------------------------------------------------------------------- |
 | Backend  | Python 3.12+, FastAPI, SQLAlchemy (async), PostgreSQL, Alembic              |
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS, ShadcnUI, TanStack Query, Zustand |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, ShadcnUI, TanStack Router + Query, Zustand |
 | AI       | AWS Bedrock (Claude)                                                        |
-| Auth     | OAuth2 (Google + GitHub), JWT                                               |
+| Auth     | OAuth2 (GitHub), JWT                                                        |
 
 ## Getting Started
 
