@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aura — The Journey Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a14;
+    --text: #f1f1f6;
+    --muted: #9ca3af;
+    --violet: #8B5CF6;
+    --emerald: #10B981;
+    --amber: #F59E0B;
+    --orange: #F97316;
+    --sky: #0EA5E9;
+    --pink: #EC4899;
+    --card: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; }
+
+  .slides { height: 100vh; scroll-snap-type: y mandatory; overflow-y: scroll; }
+  .slide {
+    height: 100vh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Ambient aura background on each slide */
+  .slide::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.15;
+    z-index: 0;
+  }
+  .slide:nth-child(1)::before { background: var(--violet); top: -200px; right: -100px; }
+  .slide:nth-child(2)::before { background: var(--emerald); bottom: -200px; left: -100px; }
+  .slide:nth-child(3)::before { background: var(--orange); top: -100px; left: -200px; }
+  .slide:nth-child(4)::before { background: var(--sky); bottom: -100px; right: -200px; }
+  .slide:nth-child(5)::before { background: var(--pink); top: -200px; right: -100px; }
+  .slide:nth-child(6)::before { background: var(--amber); bottom: -200px; left: -100px; }
+  .slide:nth-child(7)::before { background: var(--violet); top: 50%; left: 50%; transform: translate(-50%,-50%); width: 800px; height: 800px; opacity: 0.1; }
+
+  .slide > * { position: relative; z-index: 1; }
+
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+    position: absolute; top: 40px; left: 60px;
+  }
+  .logo-orb {
+    width: 24px; height: 24px; border-radius: 50%;
+    position: relative;
+  }
+  .logo-orb::before {
+    content: '';
+    position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--violet), var(--sky), var(--emerald), var(--amber), var(--orange), var(--pink), var(--violet));
+    filter: blur(8px); opacity: 0.7; transform: scale(1.4);
+  }
+  .logo-orb::after {
+    content: '';
+    position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(from 120deg, var(--violet), var(--emerald), var(--pink), var(--sky), var(--violet));
+    box-shadow: 0 0 8px rgba(139,92,246,0.4);
+  }
+  .logo span { font-family: 'Space Grotesk'; font-weight: 700; font-size: 20px; }
+
+  .slide-num {
+    position: absolute; bottom: 40px; right: 60px;
+    font-size: 14px; color: var(--muted); font-weight: 500;
+  }
+
+  .title { font-size: 64px; font-weight: 700; line-height: 1.1; max-width: 900px; text-align: center; }
+  .title .accent { color: var(--violet); }
+  .subtitle { font-size: 22px; color: var(--muted); margin-top: 20px; max-width: 700px; text-align: center; line-height: 1.5; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; width: 100%; max-width: 1100px; }
+  .col { display: flex; flex-direction: column; gap: 20px; }
+
+  .section-title { font-size: 40px; font-weight: 700; margin-bottom: 10px; }
+  .section-subtitle { font-size: 18px; color: var(--muted); line-height: 1.6; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .card h4 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .card p { font-size: 14px; color: var(--muted); line-height: 1.5; }
+
+  .card-accent { border-left: 3px solid; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%; max-width: 900px; }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+  }
+  .stat-card .num { font-family: 'Space Grotesk'; font-size: 48px; font-weight: 700; }
+  .stat-card .label { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+  .tech-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; width: 100%; max-width: 900px; }
+  .tech-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .tech-pill .icon { font-size: 28px; margin-bottom: 8px; }
+
+  .timeline {
+    display: flex; flex-direction: column; gap: 16px;
+    width: 100%; max-width: 700px;
+  }
+  .timeline-item {
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .timeline-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    margin-top: 6px; flex-shrink: 0;
+  }
+  .timeline-item h4 { font-size: 16px; font-weight: 600; }
+  .timeline-item p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .categories {
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+    margin-top: 24px;
+  }
+  .cat-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    border-radius: 99px;
+    font-size: 14px; font-weight: 600;
+    border: 1px solid;
+  }
+  .cat-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .quote {
+    font-style: italic; font-size: 24px; line-height: 1.5;
+    max-width: 700px; text-align: center; color: var(--muted);
+    margin-top: 20px;
+  }
+  .quote::before { content: '"'; }
+  .quote::after { content: '"'; }
+
+  .cta {
+    margin-top: 40px;
+    padding: 16px 40px;
+    background: var(--violet);
+    color: white;
+    border: none; border-radius: 12px;
+    font-family: 'Space Grotesk';
+    font-size: 18px; font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(139,92,246,0.3);
+  }
+
+  .features-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+  .features-list li {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 16px;
+  }
+  .features-list .check {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(16,185,129,0.15); color: var(--emerald);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .float { animation: float 4s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<div class="slides">
+
+  <!-- Slide 1: Title -->
+  <div class="slide">
+    <div class="logo"><div class="logo-orb"></div><span>Aura</span></div>
+    <h1 class="title">Your habits are <span class="accent">alive</span></h1>
+    <p class="subtitle">A gamified habit tracker where your progress breathes, glows, and is guided by an AI Master mentor.</p>
+    <div class="categories">
+      <div class="cat-pill" style="border-color: #8B5CF650; color: #8B5CF6"><div class="cat-dot" style="background:#8B5CF6"></div>Intelligence</div>
+      <div class="cat-pill" style="border-color: #10B98150; color: #10B981"><div class="cat-dot" style="background:#10B981"></div>Stamina</div>
+      <div class="cat-pill" style="border-color: #F59E0B50; color: #F59E0B"><div class="cat-dot" style="background:#F59E0B"></div>Sociality</div>
+      <div class="cat-pill" style="border-color: #F9731650; color: #F97316"><div class="cat-dot" style="background:#F97316"></div>Creativity</div>
+      <div class="cat-pill" style="border-color: #0EA5E950; color: #0EA5E9"><div class="cat-dot" style="background:#0EA5E9"></div>Discipline</div>
+      <div class="cat-pill" style="border-color: #EC489950; color: #EC4899"><div class="cat-dot" style="background:#EC4899"></div>Wellness</div>
+    </div>
+    <div class="slide-num">1 / 7</div>
+  </div>
+
+  <!-- Slide 2: The Problem -->
+  <div class="slide">
+    <div class="logo"><div class="logo-orb"></div><span>Aura</span></div>
+    <h2 class="section-title">The Problem</h2>
+    <p class="section-subtitle" style="max-width:750px; text-align:center">
+      Habit trackers are boring. Checkboxes don't inspire. People start strong and quit within weeks because there's no emotional connection to their progress.
+    </p>
+    <div class="stats-grid" style="margin-top:40px">
+      <div class="stat-card">
+        <div class="num" style="color:var(--pink)">92%</div>
+        <div class="label">of people fail their New Year resolutions</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" style="color:var(--amber)">21</div>
+        <div class="label">days to form a habit — most apps lose users by day 7</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" style="color:var(--emerald)">0</div>
+        <div class="label">apps that make your progress feel alive</div>
+      </div>
+    </div>
+    <div class="slide-num">2 / 7</div>
+  </div>
+
+  <!-- Slide 3: The Solution -->
+  <div class="slide">
+    <div class="logo"><div class="logo-orb"></div><span>Aura</span></div>
+    <div class="two-col">
+      <div class="col">
+        <h2 class="section-title">The Solution</h2>
+        <p class="section-subtitle" style="text-align:left">
+          Aura turns your habits into a living, breathing character. Your progress is visible, emotional, and guided by an AI mentor who knows you.
+        </p>
+        <ul class="features-list" style="margin-top:10px">
+          <li><span class="check">✓</span>Living Aura visualization — colors reflect your real progress</li>
+          <li><span class="check">✓</span>AI Master (Oogway-style) narrates every action with wisdom</li>
+          <li><span class="check">✓</span>Personalized quests targeting your weakest areas</li>
+          <li><span class="check">✓</span>Level + Vitality system — grow forever, stay active daily</li>
+          <li><span class="check">✓</span>6 life categories with soft neon color identities</li>
+        </ul>
+      </div>
+      <div class="col" style="justify-content:center">
+        <div class="card card-accent" style="border-left-color:var(--violet)">
+          <h4>🧠 Intelligence — Lv. 5</h4>
+          <p>XP: 15 / 81 · Vitality: ♥ 95</p>
+        </div>
+        <div class="card card-accent" style="border-left-color:var(--emerald)">
+          <h4>🔥 Stamina — Lv. 4</h4>
+          <p>XP: 8 / 61 · Vitality: ♥ 90</p>
+        </div>
+        <div class="card card-accent" style="border-left-color:var(--pink)">
+          <h4>💗 Wellness — Lv. 0</h4>
+          <p>XP: 0 / 10 · Vitality: dormant</p>
+        </div>
+        <div class="card" style="background:rgba(139,92,246,0.08); border-color:rgba(139,92,246,0.2)">
+          <h4>✨ Master's Words</h4>
+          <p style="font-style:italic">"Even the tallest tree needs every raindrop; small steps lead to great growth."</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">3 / 7</div>
+  </div>
+
+  <!-- Slide 4: Architecture -->
+  <div class="slide">
+    <div class="logo"><div class="logo-orb"></div><span>Aura</span></div>
+    <h2 class="section-title">Architecture</h2>
+
+    <!-- Architecture diagram -->
+    <div style="margin-top:30px; width:100%; max-width:900px;">
+      <div style="display:flex; flex-direction:column; gap:12px; font-size:13px;">
+
+        <!-- Frontend layer -->
+        <div style="border:1px solid var(--violet); border-radius:16px; padding:20px; background:rgba(139,92,246,0.05);">
+          <div style="font-size:11px; color:var(--violet); font-weight:600; letter-spacing:0.1em; margin-bottom:12px;">FRONTEND — React 18 + TypeScript + Vite</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div class="tech-pill" style="flex:1; min-width:120px; padding:10px;">
+              <div style="font-weight:600;">TanStack Router</div>
+              <div style="color:var(--muted); font-size:11px;">Auth guard, routing</div>
+            </div>
+            <div class="tech-pill" style="flex:1; min-width:120px; padding:10px;">
+              <div style="font-weight:600;">TanStack Query</div>
+              <div style="color:var(--muted); font-size:11px;">Server state, caching</div>
+            </div>
+            <div class="tech-pill" style="flex:1; min-width:120px; padding:10px;">
+              <div style="font-weight:600;">ShadcnUI + Tailwind</div>
+              <div style="color:var(--muted); font-size:11px;">Dark/light themes</div>
+            </div>
+            <div class="tech-pill" style="flex:1; min-width:120px; padding:10px;">
+              <div style="font-weight:600;">Framer Motion</div>
+              <div style="color:var(--muted); font-size:11px;">Aura visualization</div>
+            </div>
+            <div class="tech-pill" style="flex:1; min-width:120px; padding:10px;">
+              <div style="font-weight:600;">Zustand</div>
+              <div style="color:var(--muted); font-size:11px;">Theme, aura flares</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div style="text-align:center; color:var(--muted); font-size:18px;">↕ HTTP / JWT</div>
+
+        <!-- Backend layer -->
+        <div style="border:1px solid var(--emerald); border-radius:16px; padding:20px; background:rgba(16,185,129,0.05);">
+          <div style="font-size:11px; color:var(--emerald); font-weight:600; letter-spacing:0.1em; margin-bottom:12px;">BACKEND — Python 3.12 + FastAPI (async)</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div class="tech-pill" style="flex:1; min-width:100px; padding:10px;">
+              <div style="font-weight:600;">Auth Service</div>
+              <div style="color:var(--muted); font-size:11px;">GitHub OAuth, JWT</div>
+            </div>
+            <div class="tech-pill" style="flex:1; min-width:100px; padding:10px;">
+              <div style="font-weight:600;">Habit Service</div>
+              <div style="color:var(--muted); font-size:11px;">CRUD, schedules</div>
+            </div>
+            <div class="tech-pill" style="flex:1; min-width:100px; padding:10px;">
+              <div style="font-weight:600;">Stats Engine</div>
+              <div style="color:var(--muted); font-size:11px;">Level, XP, Vitality</div>
+            </div>
+            <div class="tech-pill" style="flex:1; min-width:100px; padding:10px;">
+              <div style="font-weight:600;">Quest Service</div>
+              <div style="color:var(--muted); font-size:11px;">Auto-gen, progress</div>
+            </div>
+            <div class="tech-pill" style="flex:1; min-width:100px; padding:10px; border-color:var(--amber);">
+              <div style="font-weight:600; color:var(--amber);">AI Master</div>
+              <div style="color:var(--muted); font-size:11px;">Narration, quests</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom row: DB + AI -->
+        <div style="display:flex; gap:12px;">
+          <div style="flex:1; border:1px solid var(--sky); border-radius:16px; padding:16px; background:rgba(14,165,233,0.05); text-align:center;">
+            <div style="text-align:center; color:var(--muted); font-size:12px; margin-bottom:4px;">↓ SQLAlchemy async</div>
+            <div style="font-weight:600; color:var(--sky);">🗄️ PostgreSQL</div>
+            <div style="color:var(--muted); font-size:11px; margin-top:4px;">7 tables · Alembic migrations</div>
+          </div>
+          <div style="flex:1; border:1px solid var(--amber); border-radius:16px; padding:16px; background:rgba(245,158,11,0.05); text-align:center;">
+            <div style="text-align:center; color:var(--muted); font-size:12px; margin-bottom:4px;">→ Bedrock API</div>
+            <div style="font-weight:600; color:var(--amber);">🤖 AWS Bedrock</div>
+            <div style="color:var(--muted); font-size:11px; margin-top:4px;">Amazon Nova Pro</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="slide-num">4 / 7</div>
+  </div>
+
+  <!-- Slide 5: The Build Journey -->
+  <div class="slide">
+    <div class="logo"><div class="logo-orb"></div><span>Aura</span></div>
+    <h2 class="section-title">The Build Journey</h2>
+    <p class="section-subtitle" style="margin-bottom:30px">From empty repo to working product — all with Claude Code</p>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--pink)"></div>
+        <div><h4>Phase 0 — Design with Stitch</h4><p>Generated 10 screens (desktop + mobile) for all pages using Stitch AI. Defined color palette, layout, and component patterns before writing any code.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--muted)"></div>
+        <div><h4>Phase 1 — Scaffolding</h4><p>uv + Vite projects, PostgreSQL, Alembic, ShadcnUI, Tailwind theme</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--violet)"></div>
+        <div><h4>Phase 2 — Backend API</h4><p>Full CRUD: auth, habits, completions, dashboard, stats, quests. 20+ endpoints.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--emerald)"></div>
+        <div><h4>Phase 3 — Frontend</h4><p>Login, dashboard (Today/Week/Month), habits page, Add Habit modal, responsive layout</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--amber)"></div>
+        <div><h4>Phase 4 — Scoring Redesign</h4><p>Replaced score 0-100 with Level + Vitality + XP system. 24 unit tests.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--orange)"></div>
+        <div><h4>Phase 5 — Aura Visualization</h4><p>Framer Motion blobs with screen blend. Breathing, flares, sparkle core. Score-driven.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--sky)"></div>
+        <div><h4>Phase 6 — AI Master</h4><p>AWS Bedrock Nova Pro integration. Real-time narrations. Personalized quests with progress tracking.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--pink)"></div>
+        <div><h4>Phase 7 — Review & Polish</h4><p>Launched parallel agent teams: BE reviewer (DRY/SOLID/KISS), FE reviewer (UX/a11y), BE test writer (40 new tests), FE test writer (25 new tests). 89 total tests. Token auto-refresh, lazy vitality decay, collapsible sidebar.</p></div>
+      </div>
+    </div>
+    <div class="slide-num">5 / 7</div>
+  </div>
+
+  <!-- Slide 6: Live Demo -->
+  <div class="slide">
+    <div class="logo"><div class="logo-orb"></div><span>Aura</span></div>
+    <h2 class="section-title">Live Demo</h2>
+    <p class="section-subtitle">Let's see Aura in action</p>
+    <div class="stats-grid" style="margin-top:40px">
+      <div class="stat-card">
+        <div class="num" style="color:var(--violet)">→</div>
+        <div class="label">Login with GitHub OAuth</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" style="color:var(--emerald)">→</div>
+        <div class="label">Add habits, complete them, watch Aura glow</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" style="color:var(--amber)">→</div>
+        <div class="label">Ask the Master for a quest</div>
+      </div>
+    </div>
+    <a href="http://localhost:5173" target="_blank" class="cta" style="text-decoration:none; margin-top:40px">
+      Open Aura →
+    </a>
+    <div class="slide-num">6 / 7</div>
+  </div>
+
+  <!-- Slide 7: Lessons & Close -->
+  <div class="slide">
+    <div class="logo"><div class="logo-orb"></div><span>Aura</span></div>
+    <h2 class="section-title">What Surprised Us</h2>
+    <div class="two-col" style="margin-top:30px; max-width:900px">
+      <div class="col" style="gap:16px">
+        <div class="card">
+          <h4>🎨 Aura visualization was the hardest</h4>
+          <p>CSS blur creates muddy colors. Canvas + additive blending was the fix. Framer Motion won for feel.</p>
+        </div>
+        <div class="card">
+          <h4>🧠 AI needs guardrails</h4>
+          <p>LLMs ignore "avoid this category" — we moved quest logic to code and let AI do only creative writing.</p>
+        </div>
+        <div class="card">
+          <h4>📊 Score 0-100 is broken</h4>
+          <p>Ceiling problem + invisible early progress. Level + Vitality with sqrt visual curve fixed it.</p>
+        </div>
+      </div>
+      <div class="col" style="gap:16px">
+        <div class="card">
+          <h4>🔇 Silent fallbacks hide bugs</h4>
+          <p>Fake quotes masked a broken Bedrock connection for hours. We removed all fallbacks — errors must surface.</p>
+        </div>
+        <div class="card">
+          <h4>✨ CLAUDE.md is the soul</h4>
+          <p>A detailed CLAUDE.md with architecture, schemas, and code standards kept every conversation consistent.</p>
+        </div>
+        <div class="card">
+          <h4>🚀 Prompt → Product in one session</h4>
+          <p>From idea to working app with AI narration, OAuth, live visualization — built entirely with Claude Code.</p>
+        </div>
+      </div>
+    </div>
+    <p class="quote" style="margin-top:40px">Even the tallest tree needs every raindrop; small steps lead to great growth.</p>
+    <p style="color:var(--muted); margin-top:8px; font-size:14px">— Master Aura (AI-generated)</p>
+    <div class="slide-num">7 / 7</div>
+  </div>
+
+</div>
+
+<script>
+  // Keyboard navigation
+  const slides = document.querySelector('.slides');
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      slides.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+    }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      slides.scrollBy({ top: -window.innerHeight, behavior: 'smooth' });
+    }
+  });
+</script>
+
+</body>
+</html>
