@@ -15,9 +15,9 @@ export default function QuestSection({ quests }: QuestSectionProps) {
   const canRequest = quests.filter((q) => q.status !== "completed" && q.status !== "expired").length < 3;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Quests</h3>
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Quests</h2>
         {canRequest && (
           <Button
             variant="ghost"
@@ -82,12 +82,13 @@ function QuestCard({ quest }: { quest: QuestSummary }) {
 
   return (
     <div
-      className="relative rounded-lg border p-3"
-      style={{ borderColor: quest.is_claimable ? color : `${color}30` }}
+      className="relative rounded-xl border bg-card/80 px-5 py-4 backdrop-blur-md"
+      style={{ borderColor: quest.is_claimable ? color : `${color}30`, borderLeftWidth: 3, borderLeftColor: color }}
     >
       <button
         onClick={() => dismiss.mutate(quest.id)}
-        className="absolute right-2 top-2 text-muted-foreground/40 hover:text-muted-foreground"
+        className="absolute right-3 top-3 text-muted-foreground/40 hover:text-muted-foreground"
+        aria-label="Dismiss quest"
         disabled={dismiss.isPending}
       >
         <X className="h-3.5 w-3.5" />
@@ -104,8 +105,8 @@ function QuestCard({ quest }: { quest: QuestSummary }) {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium leading-tight">{quest.title}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">{quest.description}</p>
+          <p className="text-sm font-medium">{quest.title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{quest.description}</p>
 
           {/* Progress bar */}
           <div className="mt-2 flex items-center gap-2">

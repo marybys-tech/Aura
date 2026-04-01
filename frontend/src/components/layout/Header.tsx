@@ -1,5 +1,6 @@
-import { Moon, Sun, Bell } from "lucide-react";
+import { Moon, Sun, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useThemeStore } from "@/stores/theme";
+import { useSidebarStore } from "@/stores/sidebar";
 import { useCurrentUser, useLogout } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,25 +13,38 @@ import {
 import Logo from "./Logo";
 
 export default function Header() {
-  const { theme, toggle } = useThemeStore();
+  const { theme, toggle: toggleTheme } = useThemeStore();
+  const { collapsed, toggle: toggleSidebar } = useSidebarStore();
   const { data: user } = useCurrentUser();
   const logout = useLogout();
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-sm lg:px-6">
-      <div className="lg:hidden">
-        <Logo size="sm" />
-      </div>
-
-      <div className="hidden lg:block" />
-
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background px-4 lg:px-6">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={toggle}>
-          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        {/* Mobile: logo */}
+        <div className="lg:hidden">
+          <Logo size="sm" />
+        </div>
+
+        {/* Desktop: sidebar toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hidden h-9 w-9 text-muted-foreground lg:flex"
+          onClick={toggleSidebar}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </Button>
 
-        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
-          <Bell className="h-4 w-4" />
+        <span className="hidden text-xs text-muted-foreground lg:block">
+          {new Date().toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={toggleTheme} aria-label="Toggle theme">
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
 
         {user && (

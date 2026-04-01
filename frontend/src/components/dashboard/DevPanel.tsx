@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { api } from "@/api/client";
-import { useQueryClient } from "@tanstack/react-query";
 
 const SCENARIOS = [
   { id: "fresh", label: "Fresh User", desc: "Just signed up, no activity" },
@@ -16,7 +15,6 @@ const SCENARIOS = [
 export default function DevPanel() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
-  const qc = useQueryClient();
 
   const apply = async (id: string) => {
     setLoading(id);

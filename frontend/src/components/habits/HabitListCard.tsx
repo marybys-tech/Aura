@@ -2,7 +2,7 @@ import type { Habit, Category } from "@/types";
 import { getCategoryColor, getCategoryLabel, formatSchedule } from "@/lib/category";
 import { useDeleteHabit } from "@/hooks/useHabits";
 import { Button } from "@/components/ui/button";
-import { Flame, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 interface HabitListCardProps {
   habit: Habit;
@@ -42,6 +42,7 @@ export default function HabitListCard({ habit }: HabitListCardProps) {
           className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
           onClick={() => deleteHabit.mutate(habit.id)}
           disabled={deleteHabit.isPending}
+          aria-label={`Delete habit: ${habit.title}`}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

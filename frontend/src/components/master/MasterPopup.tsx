@@ -15,7 +15,7 @@ export default function MasterPopup() {
         className="relative rounded-xl border bg-card p-4 shadow-lg backdrop-blur-sm"
         style={{ borderColor: `${color}40`, boxShadow: `0 0 20px ${color}20` }}
       >
-        <button onClick={dismiss} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground">
+        <button onClick={dismiss} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground" aria-label="Dismiss message">
           <X className="h-4 w-4" />
         </button>
         <div className="flex items-start gap-3">

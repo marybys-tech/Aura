@@ -14,8 +14,8 @@ export default function HabitsPage() {
   const { data: habits, isLoading } = useHabits(filter);
 
   return (
-    <div className="p-4 lg:p-6">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="p-5 lg:p-8">
+      <div className="mb-5 flex items-center justify-between">
         <h1 className="text-xl font-bold">My Habits</h1>
         <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
           <Plus className="h-4 w-4" />
@@ -23,7 +23,7 @@ export default function HabitsPage() {
         </Button>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-5 flex flex-wrap gap-2">
         <button
           onClick={() => setFilter(undefined)}
           className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${

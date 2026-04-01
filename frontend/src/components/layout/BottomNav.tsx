@@ -1,11 +1,6 @@
 import { Link, useMatchRoute } from "@tanstack/react-router";
-import { LayoutDashboard, ListChecks } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-
-const NAV_ITEMS = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/habits", label: "Habits", icon: ListChecks },
-] as const;
+import { NAV_ITEMS } from "@/lib/nav-items";
 
 export default function BottomNav() {
   return (

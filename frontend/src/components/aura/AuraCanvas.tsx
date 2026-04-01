@@ -43,12 +43,13 @@ export default function AuraCanvas({ scores, flareCategory, flareSeq }: AuraCanv
   const isNeglected = !isFresh && maxVitality < 5;
 
   return (
-    <div className="space-y-2">
+    <div>
       <div
-        className="relative overflow-hidden rounded-2xl"
+        className="relative mx-auto rounded-full"
         style={{
           backgroundColor: "transparent",
-          height: "clamp(280px, 42vh, 420px)",
+          width: "min(100%, 800px)",
+          aspectRatio: "1 / 1",
         }}
       >
         {/* Dark: screen blend (additive, colors glow). Light: normal blend (pure colors on light bg) */}

@@ -48,7 +48,7 @@ export default function HabitCard({ habit }: HabitCardProps) {
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-xl border bg-card p-4 transition-opacity ${
+      className={`flex items-center gap-4 rounded-xl border border-black/5 bg-white/70 px-5 py-4 shadow-sm backdrop-blur-xl transition-opacity dark:border-white/10 dark:bg-white/5 dark:shadow-none ${
         !isPending ? "opacity-50" : ""
       }`}
       style={{ borderLeftWidth: 3, borderLeftColor: color }}

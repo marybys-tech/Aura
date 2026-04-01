@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import BottomNav from "@/components/layout/BottomNav";
 import MasterPopup from "@/components/master/MasterPopup";
 import DevPanel from "@/components/dashboard/DevPanel";
+import { useSidebarStore } from "@/stores/sidebar";
 import LoginPage from "@/pages/LoginPage";
 import OAuthCallbackPage from "@/pages/OAuthCallbackPage";
 import DashboardPage from "@/pages/DashboardPage";
@@ -37,12 +38,13 @@ const authenticatedRoute = createRoute({
     }
   },
   component: function AuthLayout() {
+    const collapsed = useSidebarStore((s) => s.collapsed);
     return (
       <div className="flex min-h-screen bg-background">
         <Sidebar />
-        <div className="flex flex-1 flex-col lg:ml-56">
+        <div className={`flex flex-1 flex-col transition-all duration-200 ${collapsed ? "lg:ml-16" : "lg:ml-52"}`}>
           <Header />
-          <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+          <main className="flex-1 overflow-y-auto px-2 pb-20 lg:px-4 lg:pb-0">
             <Outlet />
           </main>
           <BottomNav />
