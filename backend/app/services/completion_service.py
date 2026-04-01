@@ -53,25 +53,38 @@ async def record_completion(
     await db.refresh(completion)
     await db.refresh(score)
 
-    # Generate AI Master narration
-    narration = await ai_master_service.generate_narration(
-        db=db,
-        user_id=user_id,
-        trigger_type=status.value,
-        habit_title=habit.title,
-        category=habit.category,
-        streak=streak,
-        score=score.vitality,
-        consecutive_skips=consecutive_skips,
-        trigger_ref_id=completion.id,
-    )
-
-    # Check quest progress after completion
+    # Check quest progress after completion (fast, DB only)
     if status == CompletionStatus.COMPLETED:
         from app.services.quest_service import check_quest_progress
         await check_quest_progress(db, user_id, habit.category)
 
-    return completion, score, narration
+    # Fire narration in background (don't block response)
+    import asyncio
+    asyncio.create_task(_generate_narration_bg(
+        user_id, status.value, habit.title, habit.category,
+        streak, score.vitality, consecutive_skips, completion.id,
+    ))
+
+    return completion, score, None
+
+
+async def _generate_narration_bg(
+    user_id: uuid.UUID, trigger_type: str, habit_title: str,
+    category: str, streak: int, vitality: float,
+    consecutive_skips: int, trigger_ref_id: uuid.UUID,
+) -> None:
+    """Background task: generate narration without blocking the response."""
+    from app.database import async_session
+    try:
+        async with async_session() as db:
+            await ai_master_service.generate_narration(
+                db=db, user_id=user_id, trigger_type=trigger_type,
+                habit_title=habit_title, category=category, streak=streak,
+                score=vitality, consecutive_skips=consecutive_skips,
+                trigger_ref_id=trigger_ref_id,
+            )
+    except Exception:
+        pass  # narration failure shouldn't crash anything
 
 
 async def get_habit_history(

@@ -54,6 +54,7 @@ class QuestType(StrEnum):
 
 class QuestStatus(StrEnum):
     ACTIVE = "active"
+    READY_TO_CLAIM = "ready_to_claim"
     COMPLETED = "completed"
     EXPIRED = "expired"
 

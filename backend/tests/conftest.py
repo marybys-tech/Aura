@@ -68,7 +68,7 @@ async def test_user(db_session: AsyncSession) -> User:
     await db_session.flush()
 
     for cat in ALL_CATEGORIES:
-        db_session.add(CategoryScore(user_id=user.id, category=cat.value, score=50.0))
+        db_session.add(CategoryScore(user_id=user.id, category=cat.value, vitality=50.0, level=0, xp=0.0, xp_to_next=10.0))
     await db_session.commit()
     await db_session.refresh(user)
     return user

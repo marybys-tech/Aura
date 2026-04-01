@@ -9,19 +9,19 @@ from app.schemas.user import UserUpdateRequest, UserWithScoresResponse
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-@router.get("/me", response_model=UserWithScoresResponse, summary="Get current user profile with scores")
-async def get_me(user: User = Depends(get_current_user)):
+def _build_user_response(user: User) -> UserWithScoresResponse:
+    """Build user response with scores — shared by get and update."""
     scores = {s.category: {"level": s.level, "vitality": s.vitality} for s in user.category_scores}
     return UserWithScoresResponse(
-        id=user.id,
-        email=user.email,
-        display_name=user.display_name,
-        avatar_url=user.avatar_url,
-        oauth_provider=user.oauth_provider,
-        timezone=user.timezone,
-        created_at=user.created_at,
-        scores=scores,
+        id=user.id, email=user.email, display_name=user.display_name,
+        avatar_url=user.avatar_url, oauth_provider=user.oauth_provider,
+        timezone=user.timezone, created_at=user.created_at, scores=scores,
     )
+
+
+@router.get("/me", response_model=UserWithScoresResponse, summary="Get current user profile with scores")
+async def get_me(user: User = Depends(get_current_user)):
+    return _build_user_response(user)
 
 
 @router.patch("/me", response_model=UserWithScoresResponse, summary="Update user profile")
@@ -36,14 +36,4 @@ async def update_me(
         user.timezone = body.timezone
     await db.commit()
     await db.refresh(user)
-    scores = {s.category: {"level": s.level, "vitality": s.vitality} for s in user.category_scores}
-    return UserWithScoresResponse(
-        id=user.id,
-        email=user.email,
-        display_name=user.display_name,
-        avatar_url=user.avatar_url,
-        oauth_provider=user.oauth_provider,
-        timezone=user.timezone,
-        created_at=user.created_at,
-        scores=scores,
-    )
+    return _build_user_response(user)

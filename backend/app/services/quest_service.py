@@ -49,7 +49,7 @@ async def claim_quest(db: AsyncSession, quest_id: uuid.UUID, user_id: uuid.UUID)
     quest = result.scalar_one_or_none()
     if not quest or quest.user_id != user_id:
         raise NotFoundError("Quest not found")
-    if quest.status not in (QuestStatus.ACTIVE, "ready_to_claim"):
+    if quest.status not in (QuestStatus.ACTIVE, QuestStatus.READY_TO_CLAIM):
         raise ConflictError(f"Quest is {quest.status}, cannot claim")
 
     quest.status = QuestStatus.COMPLETED
@@ -128,8 +128,8 @@ async def check_quest_progress(db: AsyncSession, user_id: uuid.UUID, category: s
 
     for quest in quests:
         met = await _evaluate_criteria(db, user_id, quest)
-        if met and quest.status != "ready_to_claim":
-            quest.status = "ready_to_claim"
+        if met and quest.status != QuestStatus.READY_TO_CLAIM:
+            quest.status = QuestStatus.READY_TO_CLAIM
 
     await db.commit()
 
@@ -145,7 +145,7 @@ async def build_quest_summaries(db: AsyncSession, user_id: uuid.UUID, quests: li
 
         progress_current, progress_target = await _get_progress(db, user_id, q)
 
-        is_claimable = q.status == "ready_to_claim"
+        is_claimable = q.status == QuestStatus.READY_TO_CLAIM
         expires_in = max(0, int((q.expires_at - now).total_seconds() / 3600)) if q.expires_at else None
 
         summaries.append(QuestSummary(
@@ -308,7 +308,7 @@ async def _get_habit_titles(db: AsyncSession, user_id: uuid.UUID) -> list[str]:
 async def _count_active(db: AsyncSession, user_id: uuid.UUID) -> int:
     result = await db.execute(
         select(func.count()).select_from(Quest).where(
-            Quest.user_id == user_id, Quest.status.in_(["active", "ready_to_claim"])
+            Quest.user_id == user_id, Quest.status.in_(["active", QuestStatus.READY_TO_CLAIM])
         )
     )
     return result.scalar() or 0
@@ -317,7 +317,7 @@ async def _count_active(db: AsyncSession, user_id: uuid.UUID) -> int:
 async def _get_active_quest_types(db: AsyncSession, user_id: uuid.UUID) -> set[str]:
     result = await db.execute(
         select(Quest.quest_type).where(
-            Quest.user_id == user_id, Quest.status.in_(["active", "ready_to_claim"])
+            Quest.user_id == user_id, Quest.status.in_(["active", QuestStatus.READY_TO_CLAIM])
         )
     )
     return {r[0] for r in result.all()}
@@ -328,7 +328,7 @@ async def _has_quest_for_category(db: AsyncSession, user_id: uuid.UUID, category
         select(func.count()).select_from(Quest).where(
             Quest.user_id == user_id,
             Quest.target_category == category,
-            Quest.status.in_(["active", "ready_to_claim"]),
+            Quest.status.in_(["active", QuestStatus.READY_TO_CLAIM]),
         )
     )
     return (result.scalar() or 0) > 0

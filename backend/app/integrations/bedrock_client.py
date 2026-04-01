@@ -1,9 +1,12 @@
 """Thin wrapper over AWS Bedrock — supports both Anthropic and Amazon Nova models."""
 
+import asyncio
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 import boto3
+from botocore.config import Config as BotoConfig
 from botocore.exceptions import ClientError
 
 from app.config import settings
@@ -11,12 +14,16 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 _client = None
+_executor = ThreadPoolExecutor(max_workers=3)
 
 
 def _get_client():
     global _client
     if _client is None:
-        kwargs = {"region_name": settings.AWS_REGION}
+        kwargs = {
+            "region_name": settings.AWS_REGION,
+            "config": BotoConfig(read_timeout=10, connect_timeout=5, retries={"max_attempts": 1}),
+        }
         if settings.AWS_ACCESS_KEY_ID:
             kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
         if settings.AWS_SECRET_ACCESS_KEY:
@@ -75,7 +82,7 @@ async def invoke_model(
     model = model_id or settings.BEDROCK_NARRATION_MODEL
     body = _build_body(model, prompt, system, max_tokens, temperature)
 
-    try:
+    def _sync_invoke():
         client = _get_client()
         response = client.invoke_model(
             modelId=model,
@@ -85,6 +92,16 @@ async def invoke_model(
         )
         result = json.loads(response["body"].read())
         return _parse_response(model, result)
+
+    try:
+        loop = asyncio.get_event_loop()
+        return await asyncio.wait_for(
+            loop.run_in_executor(_executor, _sync_invoke),
+            timeout=15,
+        )
+    except asyncio.TimeoutError:
+        logger.error("BEDROCK TIMEOUT [model=%s]: exceeded 15s", model)
+        return None
     except (ClientError, KeyError, json.JSONDecodeError) as e:
         logger.error("BEDROCK FAILED [model=%s]: %s", model, e)
         return None

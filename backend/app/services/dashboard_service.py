@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.constants import ScheduleType
+from app.core.constants import QuestStatus, ScheduleType
 from app.models.category_score import CategoryScore
 from app.models.completion import HabitCompletion
 from app.models.habit import Habit
@@ -170,7 +170,7 @@ async def _get_scores(db: AsyncSession, user_id: uuid.UUID) -> dict[str, Categor
 async def _get_active_quests(db: AsyncSession, user_id: uuid.UUID) -> list[QuestSummary]:
     from app.services.quest_service import build_quest_summaries
     result = await db.execute(
-        select(Quest).where(Quest.user_id == user_id, Quest.status.in_(["active", "ready_to_claim"]))
+        select(Quest).where(Quest.user_id == user_id, Quest.status.in_([QuestStatus.ACTIVE, QuestStatus.READY_TO_CLAIM]))
     )
     quests = list(result.scalars().all())
     return await build_quest_summaries(db, user_id, quests)

@@ -11,6 +11,7 @@ from app.models.habit import Habit
 from app.models.quest import Quest
 from app.models.user import User
 from app.schemas.quest import QuestResponse
+from app.core.constants import QuestStatus
 from app.services import ai_master_service, quest_service
 
 router = APIRouter(prefix="/quests", tags=["Quests"])
@@ -60,7 +61,7 @@ async def generate_quest(
     # Pick target category in code — weakest vitality that doesn't already have a quest
     existing_result = await db.execute(
         select(Quest.target_category).where(
-            Quest.user_id == user.id, Quest.status.in_(["active", "ready_to_claim"])
+            Quest.user_id == user.id, Quest.status.in_([QuestStatus.ACTIVE, QuestStatus.READY_TO_CLAIM])
         )
     )
     taken = set(r[0] for r in existing_result.all())
